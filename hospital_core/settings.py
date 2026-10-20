@@ -49,6 +49,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'whitenoose.middleware.WhiteNoiseMiddleware',
 ]
 
 ROOT_URLCONF = 'hospital_core.urls'
@@ -130,3 +131,5 @@ ALLOWED_HOSTS = ['xestexana-pro.onrender.com', 'localhost', '127.0.0.1']
 
 import os
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+STATICFILES_STORAGE = 'whitenoose.storage.CompressedManifestStaticFilesStorage'
