@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <title>Sistemə Giriş</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f4f8; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .login-container { background-color: #ffffff; padding: 40px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 350px; text-align: center; }
+        .login-container h2 { color: #2c3e50; margin-bottom: 5px; font-size: 22px; }
+        .form-group { margin-bottom: 20px; text-align: left; }
+        .form-group label { display: block; margin-bottom: 8px; color: #34495e; font-weight: bold; font-size: 14px;}
+        .form-group input { width: 100%; padding: 12px; border: 1px solid #cbd5e0; border-radius: 5px; box-sizing: border-box; font-size: 14px; outline: none; transition: border-color 0.3s;}
+        .form-group input:focus { border-color: #3498db; }
+        .login-btn { width: 100%; padding: 12px; background-color: #3498db; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; transition: background 0.3s; font-weight: bold; margin-top: 10px;}
+        .login-btn:hover { background-color: #2980b9; }
+        .badge { background-color: #e74c3c; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; margin-bottom: 15px; display: inline-block; font-weight: bold;}
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="badge">İTİOS & Kriptoqrafiya</div>
+        <h2>Xəstəxana Sistemi</h2>
+        <p style="color: #7f8c8d; font-size: 13px; margin-bottom: 25px;">Təhlükəsiz giriş paneli</p>
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>İstifadəçi adı:</label>
+                <input type="text" name="username" required>
+            </div>
+            <div class="form-group">
+                <label>Şifrə:</label>
+                <input type="password" name="password" required>
+            </div>
+            <button type="submit" class="login-btn">Daxil ol</button>
+        </form>
+    </div>
+</body>
+</html>
