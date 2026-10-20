@@ -127,3 +127,6 @@ AUTH_USER_MODEL = 'accounts.CustomUser'
 
 LOGIN_REDIRECT_URL = '/'
 ALLOWED_HOSTS = ['xestexana-pro.onrender.com', 'localhost', '127.0.0.1']
+
+import os
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
