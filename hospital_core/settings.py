@@ -126,3 +126,4 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'accounts.CustomUser'
 
 LOGIN_REDIRECT_URL = '/'
+ALLOWED_HOSTS = ['xestexana-pro.onrender.com', 'localhost', '127.0.0.1']
