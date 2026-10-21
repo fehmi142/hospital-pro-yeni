@@ -79,14 +79,13 @@ WSGI_APPLICATION = 'hospital_core.wsgi.application'
 
 import dj_database_url
 
-# Mövcud DATABASES hissəsini silib bununla əvəz et:
 DATABASES = {
     'default': dj_database_url.config(
         default='sqlite:///' + str(BASE_DIR / 'db.sqlite3'),
-        conn_max_age=600
+        conn_max_age=600,
+        ssl_require=True
     )
 }
-
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
 
