@@ -1,48 +1,56 @@
 from django.db import models
 from django.conf import settings
-from accounts.models import CustomUser
 
-class Mesaj(models.Model):
-    gonderen = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='gonderilen_mesajlar', verbose_name="Göndərən")
-    alan = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='alinan_mesajlar', verbose_name="Alan")
-    sifreli_metn = models.TextField(blank=True, null=True, verbose_name="Mətn")
-    fayl = models.FileField(upload_to='mesaj_fayllari/', blank=True, null=True, verbose_name="Fayl/Şəkil")
-    sifreli_fayl_adi = models.CharField(max_length=255, blank=True, null=True)
-    tarix = models.DateTimeField(auto_now_add=True, verbose_name="Göndərilmə Tarixi")
+class Appointment(models.Model):
+    # Randevu statusları
+    STATUS_CHOICES = (
+        ('gözləyir', 'Gözləyir'),
+        ('təsdiqləndi', 'Təsdiqləndi'),
+        ('bitdi', 'Tamamlandı'),
+        ('ləğv', 'Ləğv Edildi'),
+    )
 
-    def mesaj_yaz(self, duz_metn, yuklenen_fayl=None):
-        # Şifrələmə müvəqqəti dayandırıldı, birbaşa saxlanılır
-        if duz_metn:
-            self.sifreli_metn = duz_metn
-        if yuklenen_fayl:
-            self.fayl = yuklenen_fayl
-            self.sifreli_fayl_adi = yuklenen_fayl.name
-
-    def mesaji_oxu(self):
-        return self.sifreli_metn if self.sifreli_metn else ""
-
-    def __str__(self):
-        return f"Mesaj: {self.gonderen.username} -> {self.alan.username}"
-
-class HekimXesteTeyinati(models.Model):
-    hekim = models.ForeignKey(CustomUser, on_delete=models.CASCADE, limit_choices_to={'rol': 'Həkim'}, related_name='xesteleri', verbose_name="Həkim")
-    xeste = models.ForeignKey(CustomUser, on_delete=models.CASCADE, limit_choices_to={'rol': 'Xəstə'}, related_name='hekimleri', verbose_name="Xəstə")
-
-    class Meta:
-        verbose_name = "Həkim-Xəstə Təyinatı (Access Control)"
-        verbose_name_plural = "Həkim-Xəstə Təyinatları (Access Control)"
-
-    def __str__(self):
-        return f"Həkim: {self.hekim.username} <---> Xəstə: {self.xeste.username}"
-
-class RBACIcazeleri(models.Model):
-    istifadeci = models.OneToOneField(CustomUser, on_delete=models.CASCADE, verbose_name="İstifadəçi")
-    sisteme_gire_biler = models.BooleanField(default=True, verbose_name="Sistemə Giriş İcazəsi")
-    mesaj_yaza_biler = models.BooleanField(default=True, verbose_name="Mesaj Göndərmə İcazəsi")
+    patient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='patient_appointments', limit_choices_to={'role': 'patient'}, verbose_name="Xəstə")
+    doctor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='doctor_appointments', limit_choices_to={'role': 'doctor'}, verbose_name="Həkim")
+    
+    date = models.DateField(verbose_name="Tarix")
+    time = models.TimeField(verbose_name="Saat")
+    
+    notes = models.TextField(blank=True, null=True, verbose_name="Xəstənin şikayəti/qeydi")
+    
+    # Yeni sətirlər cədvəlin içinə, tam bura əlavə edilməlidir
+    prescription = models.TextField(blank=True, null=True, verbose_name="Həkimin Rəyi / Resept")
+    attachment = models.FileField(upload_to='medical_records/', blank=True, null=True, verbose_name="Rentgen / Analiz Nəticəsi")
+    
+    # WHATSAPP KİMİ OXUNMA FUNKSİYASI ÜÇÜN YENİ SƏTİR
+    is_read_by_patient = models.BooleanField(default=False, verbose_name="Xəstə oxuyubmu?")
+    
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='gözləyir', verbose_name="Status")
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        verbose_name = "RBAC - İstifadəçi İcazəsi"
-        verbose_name_plural = "RBAC - İstifadəçi İcazələri"
+        verbose_name = "Randevu"
+        verbose_name_plural = "Randevular"
+        ordering = ['-date', '-time']
 
     def __str__(self):
-        return f"{self.istifadeci.username} İcazələri"
+        return f"{self.patient.username} - Dr. {self.doctor.username} ({self.date} {self.time})"
+
+
+# SecureMessage tamam ayrı bir cədvəldir deyə kənardan (divara bitişik) başlayır
+class SecureMessage(models.Model):
+    sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sent_messages')
+    receiver = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='received_messages')
+    
+    # Mesajlar bazada açıq mətn kimi yox, şifrəli AES-256 və ya Base64 kod kimi saxlanacaq
+    encrypted_content = models.TextField(verbose_name="Şifrələnmiş Məzmun")
+    
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Gizli Mesaj"
+        verbose_name_plural = "Gizli Mesajlar"
+        ordering = ['timestamp']
+
+    def __str__(self):
+        return f"Şifrəli Mesaj: {self.sender.username} -> {self.receiver.username}"

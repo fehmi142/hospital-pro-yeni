@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <title>Həkim Paneli - Hospital Pro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- WhatsApp Quş İkonları Üçün CDN -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+</head>
+<body class="bg-light">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-success shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="{% url 'home' %}">🏥 Hospital Pro</a>
+            <div class="ms-auto">
+                <a href="{% url 'home' %}" class="btn btn-light text-success me-2">Ana Səhifə</a>
+                <a href="{% url 'logout' %}" class="btn btn-danger text-white">Çıxış</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+                    <strong>Bildiriş:</strong> {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="d-flex justify-content-between align-items-center mb-4 mt-3">
+            <h2 class="text-success fw-bold">Xoş gəldiniz, Dr. {{ user.username }}</h2>
+            <span class="badge bg-warning text-dark fs-6">Həkim Paneli</span>
+        </div>
+        
+        <div class="card shadow-sm p-4 border-0">
+            <h4 class="text-success mb-4">📅 Gözləyən Randevularınız</h4>
+            
+            {% if appointments %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle text-center">
+                        <thead class="table-success">
+                            <tr>
+                                <th>Xəstə</th>
+                                <th>Tarix/Saat</th>
+                                <th>Şikayət</th>
+                                <th>Oxunma Statusu</th> <!-- Yeni Başlıq -->
+                                <th>Status</th>
+                                <th>Əməliyyat</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for appt in appointments %}
+                            <tr>
+                                <td class="fw-bold">{{ appt.patient.username }}</td>
+                                <td>{{ appt.date|date:"d M Y" }} <br> {{ appt.time|time:"H:i" }}</td>
+                                <td>{{ appt.notes|default:"Qeyd yoxdur" }}</td>
+                                
+                                <!-- WHATSAPP QUŞLARI BURADA GÖRÜNÜR -->
+                                <td>
+                                    {% if appt.prescription %}
+                                        {% if appt.is_read_by_patient %}
+                                            <i class="bi bi-check-all fs-3 text-primary" title="Xəstə oxudu"></i>
+                                        {% else %}
+                                            <i class="bi bi-check fs-3 text-secondary" title="Göndərildi"></i>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted small">-</span>
+                                    {% endif %}
+                                </td>
+                                
+                                <td><span class="badge bg-primary">{{ appt.get_status_display }}</span></td>
+                                <td>
+                                    <a href="{% url 'doctor_update_appointment' appt.pk %}" class="btn btn-sm btn-success">Cavabla</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info">Hazırda heç bir randevunuz yoxdur.</div>
+            {% endif %}
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

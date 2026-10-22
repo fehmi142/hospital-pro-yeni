@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <title>Qeydiyyat - Hospital Pro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: url('https://images.unsplash.com/photo-1586773860418-d37222d8fce3?q=80&w=1920&auto=format&fit=crop') no-repeat center center fixed;
+            background-size: cover;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding-top: 40px;
+            padding-bottom: 40px;
+        }
+        .register-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            backdrop-filter: blur(5px);
+        }
+        #google_translate_element {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 5px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            margin-bottom: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        input:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 5px rgba(13, 110, 253, 0.5);
+            outline: none;
+        }
+        
+        /* Şifrə qaydaları paneli */
+        .password-rules-box {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 10px;
+            margin-bottom: 15px;
+        }
+        
+        /* Djangonun standart, kifayət qədər oxunaqlı olmayan şifrə yazılarını gizlədirik */
+        .helptext { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <!-- Dil Seçimi (AZ, EN, RU) -->
+    <div id="google_translate_element"></div>
+    <script type="text/javascript">
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({
+                pageLanguage: 'az', 
+                includedLanguages: 'az,en,ru',
+                layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+            }, 'google_translate_element');
+        }
+    </script>
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-5">
+                <div class="card shadow-lg register-card border-0 p-4 mt-4">
+                    <div class="card-body">
+                        <div class="text-center mb-4">
+                            <h2 class="text-primary fw-bold">Yeni Xəstə Qeydiyyatı</h2>
+                        </div>
+                        
+                        <!-- ƏGƏR BAZADA XƏTA VARSA (Məs: istifadəçi adı artıq tutulub), BURA ÇIXACAQ -->
+                        {% if form.errors %}
+                            <div class="alert alert-danger shadow-sm">
+                                <strong>Xəta!</strong> Zəhmət olmasa daxil etdiyiniz məlumatları yoxlayın:
+                                <ul class="mb-0 mt-2">
+                                {% for field in form %}
+                                    {% for error in field.errors %}
+                                        <li>{{ field.label }}: {{ error }}</li>
+                                    {% endfor %}
+                                {% endfor %}
+                                </ul>
+                            </div>
+                        {% endif %}
+
+                        <form method="POST" id="registerForm">
+                            {% csrf_token %}
+                            {{ form.as_p }}
+                            
+                            <!-- BİZİM YENİ ŞİFRƏ TƏLƏBLƏRİ PANELİMİZ -->
+                            <div class="password-rules-box">
+                                <h6 class="text-muted fw-bold">Şifrə Tələbləri:</h6>
+                                <ul class="list-unstyled mb-0" style="font-size: 0.9em;">
+                                    <li id="rule-length" class="text-danger">✖ Ən azı 8 simvol</li>
+                                    <li id="rule-upper" class="text-danger">✖ Ən azı 1 böyük hərf (A-Z)</li>
+                                    <li id="rule-lower" class="text-danger">✖ Ən azı 1 kiçik hərf (a-z)</li>
+                                    <li id="rule-number" class="text-danger">✖ Ən azı 1 rəqəm (0-9)</li>
+                                    <li id="rule-special" class="text-danger">✖ Ən azı 1 xüsusi simvol (@$!%*?&)</li>
+                                </ul>
+                            </div>
+
+                            <!-- Qeydiyyat düyməsi (əvvəlcə passiv olacaq) -->
+                            <button type="submit" id="submitBtn" class="btn btn-primary btn-lg w-100 mt-2 fw-bold" disabled>Qeydiyyatdan Keç</button>
+                        </form>
+                        
+                        <div class="text-center mt-4">
+                            <a href="{% url 'login' %}" class="text-decoration-none">Artıq hesabınız var? Daxil olun</a><br><br>
+                            <a href="{% url 'home' %}" class="text-muted text-decoration-none">🏠 Ana Səhifəyə qayıt</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Form dizaynı
+        document.querySelectorAll('input').forEach(input => {
+            if(input.type !== 'checkbox' && input.type !== 'submit') {
+                input.classList.add('form-control');
+            }
+        });
+
+        // Şifrə Yoxlama Məntiqi (Canlı olaraq qırmızı/yaşıl edir)
+        const passwordInputs = document.querySelectorAll('input[type="password"]');
+        const submitBtn = document.getElementById('submitBtn');
+
+        if (passwordInputs.length > 0) {
+            const pass1 = passwordInputs[0]; // Əsas şifrə qutusu
+
+            // Qaydaların elementlərini tapırıq
+            const rLength = document.getElementById('rule-length');
+            const rUpper = document.getElementById('rule-upper');
+            const rLower = document.getElementById('rule-lower');
+            const rNumber = document.getElementById('rule-number');
+            const rSpecial = document.getElementById('rule-special');
+
+            pass1.addEventListener('input', function() {
+                const val = pass1.value;
+                let validCount = 0;
+
+                // 1. Uzunluq
+                if (val.length >= 8) { rLength.className = 'text-success fw-bold'; rLength.innerHTML = '✔ Ən azı 8 simvol'; validCount++; }
+                else { rLength.className = 'text-danger'; rLength.innerHTML = '✖ Ən azı 8 simvol'; }
+
+                // 2. Böyük hərf
+                if (/[A-Z]/.test(val)) { rUpper.className = 'text-success fw-bold'; rUpper.innerHTML = '✔ Ən azı 1 böyük hərf (A-Z)'; validCount++; }
+                else { rUpper.className = 'text-danger'; rUpper.innerHTML = '✖ Ən azı 1 böyük hərf (A-Z)'; }
+
+                // 3. Kiçik hərf
+                if (/[a-z]/.test(val)) { rLower.className = 'text-success fw-bold'; rLower.innerHTML = '✔ Ən azı 1 kiçik hərf (a-z)'; validCount++; }
+                else { rLower.className = 'text-danger'; rLower.innerHTML = '✖ Ən azı 1 kiçik hərf (a-z)'; }
+
+                // 4. Rəqəm
+                if (/[0-9]/.test(val)) { rNumber.className = 'text-success fw-bold'; rNumber.innerHTML = '✔ Ən azı 1 rəqəm (0-9)'; validCount++; }
+                else { rNumber.className = 'text-danger'; rNumber.innerHTML = '✖ Ən azı 1 rəqəm (0-9)'; }
+
+                // 5. Xüsusi simvol
+                if (/[^A-Za-z0-9]/.test(val)) { rSpecial.className = 'text-success fw-bold'; rSpecial.innerHTML = '✔ Ən azı 1 xüsusi simvol (@$!%*?&)'; validCount++; }
+                else { rSpecial.className = 'text-danger'; rSpecial.innerHTML = '✖ Ən azı 1 xüsusi simvol (@$!%*?&)'; }
+
+                // Əgər 5 qaydanın hamısı yaşıl olubsa, düyməni aktivləşdir!
+                if (validCount === 5) {
+                    submitBtn.disabled = false;
+                } else {
+                    submitBtn.disabled = true;
+                }
+            });
+        }
+    </script>
+</body>
+</html>
