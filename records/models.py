@@ -1,8 +1,8 @@
 from django.db import models
 from django.conf import settings
+from django_cryptography.fields import encrypt  # ŞİFRƏLƏMƏ MODULU BURA ƏLAVƏ EDİLDİ
 
 class Appointment(models.Model):
-    # Randevu statusları
     STATUS_CHOICES = (
         ('gözləyir', 'Gözləyir'),
         ('təsdiqləndi', 'Təsdiqləndi'),
@@ -16,15 +16,12 @@ class Appointment(models.Model):
     date = models.DateField(verbose_name="Tarix")
     time = models.TimeField(verbose_name="Saat")
     
-    notes = models.TextField(blank=True, null=True, verbose_name="Xəstənin şikayəti/qeydi")
+    # BU SƏTİRLƏR BAZADA ŞİFRƏLİ SAXLANACAQ
+    notes = encrypt(models.TextField(blank=True, null=True, verbose_name="Xəstənin şikayəti/qeydi"))
+    prescription = encrypt(models.TextField(blank=True, null=True, verbose_name="Həkimin Rəyi / Resept"))
     
-    # Yeni sətirlər cədvəlin içinə, tam bura əlavə edilməlidir
-    prescription = models.TextField(blank=True, null=True, verbose_name="Həkimin Rəyi / Resept")
     attachment = models.FileField(upload_to='medical_records/', blank=True, null=True, verbose_name="Rentgen / Analiz Nəticəsi")
-    
-    # WHATSAPP KİMİ OXUNMA FUNKSİYASI ÜÇÜN YENİ SƏTİR
     is_read_by_patient = models.BooleanField(default=False, verbose_name="Xəstə oxuyubmu?")
-    
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='gözləyir', verbose_name="Status")
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -37,14 +34,11 @@ class Appointment(models.Model):
         return f"{self.patient.username} - Dr. {self.doctor.username} ({self.date} {self.time})"
 
 
-# SecureMessage tamam ayrı bir cədvəldir deyə kənardan (divara bitişik) başlayır
 class SecureMessage(models.Model):
     sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sent_messages')
     receiver = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='received_messages')
     
-    # Mesajlar bazada açıq mətn kimi yox, şifrəli AES-256 və ya Base64 kod kimi saxlanacaq
-    encrypted_content = models.TextField(verbose_name="Şifrələnmiş Məzmun")
-    
+    encrypted_content = encrypt(models.TextField(verbose_name="Şifrələnmiş Məzmun"))
     timestamp = models.DateTimeField(auto_now_add=True)
 
     class Meta:
